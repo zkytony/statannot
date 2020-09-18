@@ -276,7 +276,7 @@ def add_stat_annotation(ax, plot='boxplot',
                         comparisons_correction='bonferroni',
                         use_fixed_offset=False, line_offset_to_box=None,
                         line_offset=None, line_height=0.02, text_offset=1,
-                        color='0.2', linewidth=1.5,
+                        color='0.2', linewidth=1.5, offset_basis="ymax",
                         fontsize='medium', verbose=1):
     """
     Optionally computes statistical test between pairs of data series, and add statistical annotation on top
@@ -425,6 +425,7 @@ def add_stat_annotation(ax, plot='boxplot',
                 line_offset_to_box = 0.06
         elif loc == 'outside':
             line_offset_to_box = line_offset
+            
     y_offset = line_offset*yrange
     y_offset_to_box = line_offset_to_box*yrange
 
@@ -438,7 +439,7 @@ def add_stat_annotation(ax, plot='boxplot',
         box_plotter = sns.categorical._BarPlotter(
             x, y, hue, data, order, hue_order,
             estimator=np.mean, ci=95, n_boot=1000, units=None,
-            orient=None, color=None, palette=None, saturation=.75,
+            seed=None, orient=None, color=None, palette=None, saturation=.75,
             errcolor=".26", errwidth=None, capsize=None, dodge=True)
 
     # Build the list of box data structures with the x and ymax positions
@@ -488,9 +489,14 @@ def add_stat_annotation(ax, plot='boxplot',
     # Build array that contains the x and y_max position of the highest annotation or box data at
     # a given x position, and also keeps track of the number of stacked annotations.
     # This array will be updated when a new annotation is drawn.
-    y_stack_arr = np.array([[box_struct['x'] for box_struct in box_structs],
-                            [box_struct['ymax'] for box_struct in box_structs],
-                            [0 for i in range(len(box_structs))]])
+    if offset_basis == "ymax":
+        y_stack_arr = np.array([[box_struct['x'] for box_struct in box_structs],
+                                [box_struct['ymax'] for box_struct in box_structs],
+                                [0 for i in range(len(box_structs))]])
+    elif offset_basis == "ymean":
+        y_stack_arr = np.array([[box_struct['x'] for box_struct in box_structs],
+                                [box_struct['box_data'].mean() for box_struct in box_structs],
+                                [0 for i in range(len(box_structs))]])        
     if loc == 'outside':
         y_stack_arr[1, :] = ylim[1]
     ann_list = []
